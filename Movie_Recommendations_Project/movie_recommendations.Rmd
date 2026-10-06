@@ -1,0 +1,63 @@
+---
+title:movie_recommendations
+output: html_document
+---
+
+```{r}
+library(readr)
+library(ggfortify)
+library(corrplot)
+ratings <- read_csv("ratings.csv.crdownload")
+Genome <- read_csv("MovieGenome.csv")
+Movies<- read_csv("movies.csv")
+dim(Genome)
+```
+
+```{r}
+Genome.pca = prcomp(Genome[2:1129], scale.=TRUE)#column 1 is movieid variable
+```
+#Cool Hand Luke is movie id 1276 and is a Drama (my favorite movie) going to use this to generate predictions
+
+```{r}
+
+rollingvariance <- cumsum(Genome.pca$sdev^2) / sum(Genome.pca$sdev^2) #cummulative proportion variance by the principal components pc1 = 40% pc2=25% pc1+pc2 = 65% created by the stand dev to tell use how spread out the data around the mean. Without scaling, the a seperate variable may have much larger numerical values. It could have a disproportionately large influence on the PCA.R gives each principal component a standard deviation: we're squaring the standard deviation, which gives us the variance."What percentage of the total variance is explained as we add more principal components?"
+
+num.pcs <- which(rollingvariance>= 0.90)[1] #select a number of principal components that add to 90% variability
+
+num.pcs
+rollingvariance[447] ###used to verify 90 varation threshold of the 447 priniciapl components
+
+```
+
+```{r}
+Genome.pca.df <- data.frame(
+  movieId = Genome$movieId,###puts movieid back into the dataset as it is an identifier not a variable
+  Genome.pca$x[, 1:447]#important pca components which is 447 pcs
+###x represents the number of movies
+)
+```
+
+
+```{r}
+
+favorite.movie <- 1276
+favorite.movie.row <- which(Genome.pca.df$movieId == favorite.movie) #row number for cool hand luke
+favorite.movie.pcs <- Genome.pca.df[favorite.movie,-1] 
+
+##"Take the row corresponding to my chosen movie, and remove the movieId column. Keep all 447 PC values." get the number of rows from the pca data frame.calculate the distance for every movie based on the variability.sapply "Do this calculation for every value of i and collect the results." Puts your movie and the current movie on top of each other so it can compare my favorite movie to the next closest movie. give me all rows and columns except for movieid.euclidean disatnce, How far apart are these two movies based on their 447 PCA characteristics?###
+movie.distance <- sapply(1:nrow(Genome.pca.df), function(i) {
+  dist( 
+    rbind( 
+      favorite.movie.pcs, 
+      Genome.pca.df[i, -1] 
+    ),
+    method = "euclidean"
+  ) #"For every movie in my dataset, take its 447 PCA values, compare them to my favorite movie's 447 PCA values using Euclidean distance, and save all of those distances."
+})
+```
+```{r}
+MoviesMatrix <- data.frame(
+  movieId = Genome.pca.df$movieId)
+  distance = MoviesMatrix
+```
+
