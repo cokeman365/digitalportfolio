@@ -8,7 +8,7 @@ library(readr)
 library(ggfortify)
 library(corrplot)
 ratings <- read_csv("ratings.csv.crdownload")
-Genome <- read_csv("MovieGenome.csv")
+Genome <- read_csv("Genome.csv")
 Movies<- read_csv("movies.csv")
 dim(Genome)
 ```
@@ -24,16 +24,15 @@ rollingvariance <- cumsum(Genome.pca$sdev^2) / sum(Genome.pca$sdev^2) #cummulati
 
 num.pcs <- which(rollingvariance>= 0.90)[1] #select a number of principal components that add to 90% variability
 
-num.pcs
-rollingvariance[447] ###used to verify 90 varation threshold of the 447 priniciapl components
+num.pcs 
+rollingvariance[447] ###used to verify 90 varation threshold of the 447 prinicipal components to accumulate 90% variation total
 
 ```
 
 ```{r}
 Genome.pca.df <- data.frame(
   movieId = Genome$movieId,###puts movieid back into the dataset as it is an identifier not a variable
-  Genome.pca$x[, 1:447]#important pca components which is 447 pcs
-###x represents the number of movies
+  Genome.pca$x[, 1:447]#important pca components which is 447 pcs ###x represents the number of movies
 )
 ```
 
@@ -41,10 +40,19 @@ Genome.pca.df <- data.frame(
 ```{r}
 
 favorite.movie <- 1276
-favorite.movie.row <- which(Genome.pca.df$movieId == favorite.movie) #row number for cool hand luke
-favorite.movie.pcs <- Genome.pca.df[favorite.movie,-1] 
+favorite.movie.row <- which(Genome.pca.df$movieId == favorite.movie) #row number of my favorite 
+favorite.movie.pcs <- Genome.pca.df[
+  Genome.pca.df$movieId ==
+  favorite.movie,-1,
+  drop = FALSE
+  ]#find the pc value of my favorite movie 
+```
 
-##"Take the row corresponding to my chosen movie, and remove the movieId column. Keep all 447 PC values." get the number of rows from the pca data frame.calculate the distance for every movie based on the variability.sapply "Do this calculation for every value of i and collect the results." Puts your movie and the current movie on top of each other so it can compare my favorite movie to the next closest movie. give me all rows and columns except for movieid.euclidean disatnce, How far apart are these two movies based on their 447 PCA characteristics?###
+
+###"Take the row corresponding to my chosen movie, and remove the movieId column. Keep all 447 PC values." get the number of rows from the pca data frame.calculate the distance for every movie based on the variability.sapply "Do this calculation for every value of i and collect the results." Puts your movie and the current movie on top of each other so it can compare my favorite movie to the next closest movie. give me all rows and columns except for movieid.euclidean disatnce, How far apart are these two movies based on their 447 PCA characteristics? The standard deviations 
+###
+
+```{r}
 movie.distance <- sapply(1:nrow(Genome.pca.df), function(i) {
   dist( 
     rbind( 
@@ -52,12 +60,40 @@ movie.distance <- sapply(1:nrow(Genome.pca.df), function(i) {
       Genome.pca.df[i, -1] 
     ),
     method = "euclidean"
-  ) #"For every movie in my dataset, take its 447 PCA values, compare them to my favorite movie's 447 PCA values using Euclidean distance, and save all of those distances."
-})
-```
-```{r}
-MoviesMatrix <- data.frame(
-  movieId = Genome.pca.df$movieId)
-  distance = MoviesMatrix
+  ) #"For every movie in my dataset, take its 447 PCA values, compare them to my favorite movie's 447 PCA values using Euclidean distance, and save all of those distances." ###
+  })
 ```
 
+```{r}
+movie.distance.df <- data.frame( #created a reduced pca dateframe that is based on distance
+  movieId = Genome.pca.df$movieId,
+  distance = as.numeric(movie.distance) #calculating the distance 
+)
+```
+
+
+```{r}
+movie.distance.df <- movie.distance.df[order(movie.distance.df$distance), ] #sorts the date frame by distance smallest to largest
+```
+
+```{r}
+###find the top 10 most similar movies based on distance
+
+top10 <- movie.distance.df[
+  movie.distance.df$movieId !=favorite.movie,
+]
+```
+
+```{r}
+top10 <- merge(
+  top10,
+  Movies[,c("movieId","title")],
+  by = "movieId",
+  all.x = TRUE
+  )
+
+top10 <- top10[,c("movieId","title","distance")]
+top10 <- top10[order(top10$distance), ]
+row.names(top10) <- NULL
+top10 <-head(top10,10)
+```
