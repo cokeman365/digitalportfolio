@@ -8,7 +8,7 @@
 With thousands of movies available on streaming platforms, users can struggle to find content that matches their interests. A content-based recommendation system can help solve this problem by identifying movies with similar characteristics, reducing the effort required to discover relevant content.
 
 ## Project Overview
-Developed a content-based movie recommendation system using R to identify the 10 most similar movies to a selected film, *Cool Hand Luke (1967)*.
+Developed a content-based movie recommendation system using R to identify the 10 most similar movies to a selected film, my personal favorite film *Cool Hand Luke (1967)*.
 
 The project utilized Principal Component Analysis (PCA) to reduce over 1,000 movie characteristics into 447 principal components while preserving at least 90% of the dataset's variance. Euclidean distance was then used to measure similarity between movies, producing a ranked list of recommendations.
 
